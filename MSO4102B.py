@@ -115,15 +115,38 @@ def read_trace(handler):
     #x,y = MSO.scale_data(scaling_dict, curve)
     return curve
 
-def set_time_axis(handler, scale, position, readout_length = 1000):
+def set_time_axis(handler, scale=100.e-9, position=0, readout_length=1000, mode=0, verbose=False):
     '''
     Set the time axis characteristics for the scope. 
+    Parameters: 
+        scale : Horizontal scale in s
+        position : readout window position in percent. 0 places trigger at center of readout, 
+            60 places it one division further to the left.
+        readout_length: Readout length in samples; 1000, 10,000, etc.
+        mode: To use the position argument as a position knob, use mode=0 (the default).
+        verbose: verbose?
+
 
     '''
-    prefix = 'HORizontal:'
-
-    handler.write(prefix+'POS {0:f}'.format(scale))
+    prefix = ':HOR:'
+    handler.write(prefix+':DELAY:MODE {0:d}'.format(mode))
+    handler.write(prefix+'POS {0:f}'.format(position))
     handler.write(prefix+'RECO {0:f}'.format(readout_length))
     handler.write(prefix+'SCA {0:f}'.format(scale))
 
-    
+
+
+    if verbose:
+        print("Horizontal configuration information: ")
+        for i in handler.query(":HOR?").rstrip('\n').split(';'):
+            print(i)
+
+def set_vertical_axis(handler, scale, position, verbose):
+
+    '''
+    This function is incomplete. 
+    '''
+
+    if verbose:
+        print("Vertical configuration information:")
+
