@@ -1,5 +1,6 @@
 import numpy as np
 import visa
+import time 
 
 VISA_RM = visa.ResourceManager()
 
@@ -167,3 +168,26 @@ class Scope():
         if verbose:
             print("Vertical configuration information:")
 
+    def read_triggered_event(self, verbose=False):
+
+        self.write("VERBOSE OFF") #turn off verbosity
+
+        i = 0
+        self.write("ACQ:STOPA SEQ")
+        waiting = 1
+
+        self.write("ACQ:STATE RUN")
+
+        while waiting == 1:
+            waiting = int(scope.query("ACQ:STATE?"))
+            state = scope.query("TRIGGER:STATE?")
+
+        
+        timestamp = time.time()
+        curve_data = scope.query("CURVE?")#np.array(scope.query("CURVE?").rstrip("\n").split(' ')[-1].split(','), dtype=int)
+
+        if verbose:
+
+            print("Triggered! Saving...")
+            print(timestamps[i])
+            print(curve_data)
