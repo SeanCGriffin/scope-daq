@@ -169,6 +169,9 @@ class Scope():
             print("Vertical configuration information:")
 
     def read_triggered_event(self, verbose=False):
+        '''
+        Read a triggered event on the scope and return the timestamp and curve data.
+        '''
 
         self.write("VERBOSE OFF") #turn off verbosity
 
@@ -191,3 +194,5 @@ class Scope():
             print("Triggered! Saving...")
             print(timestamps[i])
             print(curve_data)
+
+        return timestamp, curve_data
