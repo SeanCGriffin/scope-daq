@@ -182,12 +182,12 @@ class Scope():
         self.write("ACQ:STATE RUN")
 
         while waiting == 1:
-            waiting = int(scope.query("ACQ:STATE?"))
-            state = scope.query("TRIGGER:STATE?")
+            waiting = int(self.query("ACQ:STATE?"))
+            state = self.query("TRIGGER:STATE?")
 
         
         timestamp = time.time()
-        curve_data = scope.query("CURVE?")#np.array(scope.query("CURVE?").rstrip("\n").split(' ')[-1].split(','), dtype=int)
+        curve_data = self.query("CURVE?")#np.array(scope.query("CURVE?").rstrip("\n").split(' ')[-1].split(','), dtype=int)
 
         if verbose:
 
