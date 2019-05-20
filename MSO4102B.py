@@ -42,7 +42,7 @@ class Scope():
 
         for parameter in config.split(';'):
             key, val = parameter.split(' ', 1)
-            config_dict[key] = val
+            config_dict[key] = val.rstrip('\n')
             if verbose:
                 print("{0:s} : {1:s}".format(key, val))
 
@@ -55,6 +55,22 @@ class Scope():
         self.write(":TRIG:A:EDGE:SLOPE {0:s}".format(edge))
         self.write(':TRIG:A:LEVEL:CH{0:d} {1:f}'.format(channel, threshold/1000.))
 
+    def get_trigger_config(self):
+
+        command_list = ["EDGE:SOURCE", 
+                        "EDGE:SLOPE", 
+                        "LEVEL"]
+
+        trigger_config_dict = {}
+        for command in command_list:
+            cmd = ":TRIG:A:" + command + "?"
+            #print(cmd)
+            val = self.query(cmd)
+            trigger_config_dict[command] = val.rstrip('\n')
+
+
+        return trigger_config_dict
+
     def get_source_channel(self, verbose=False):
         '''
         Returns the data channel from the scope.
@@ -63,22 +79,25 @@ class Scope():
         channel = int(channel[-1][-1])
 
         if verbose:
-            print("Data source channel: {0:d}".format(channel))
+            print("Data source channel [1-indexed]: {0:d}".format(channel))
 
         return channel
 
     def set_source_channel(self, channel):
         '''
         Set the data return channel on the scope.
+        Input is 0-indexed, Scope is 1-indexed.
         '''
-        self.write(":DATA:SOURCE {0:d}".format(channel))
 
-    def read_scaling_config(self, verbose=False):
+        self.write(":DATA:SOURCE CH{0:d}".format(channel + 1))
+
+    def read_scaling_config(self, verbose=False, channel=0):
         '''
         Read the configuration information required to correctly scale the x- and y- axes in CURVe data.
         '''
 
-        channel = get_source_channel(self, verbose)
+        self.set_source_channel(channel)
+        self.get_source_channel(True)
         prefix = ':WFMOutpre:'
         command_list = ['NR_PT?', 
                         'XUNIT?',
@@ -97,7 +116,7 @@ class Scope():
             #drop the '?' and parse the query return
             scaling_dict[command[0:-1]] = val.rstrip("\n").split(" ")[-1] 
             
-        scaling_dict['channel'] = channel
+        scaling_dict['channel'] = self.query(":DATA:SOURCE?").rstrip("\n")
         scaling_dict['record_length'] = self.query('HORizontal:RECOrdlength?').rstrip("\n").split(" ")[-1] 
         if verbose:
             for key in scaling_dict:
@@ -105,7 +124,7 @@ class Scope():
 
         return scaling_dict    
         
-    def scale_data(scaling_dict, curve):
+    def scale_data(self, scaling_dict, curve):
         '''
         Using the scaling dictionary, return a 2D array containing X and Y values. 
         '''
@@ -182,12 +201,12 @@ class Scope():
         self.write("ACQ:STATE RUN")
 
         while waiting == 1:
-            waiting = int(scope.query("ACQ:STATE?"))
-            state = scope.query("TRIGGER:STATE?")
+            waiting = int(self.query("ACQ:STATE?"))
+            state = self.query("TRIGGER:STATE?")
 
         
         timestamp = time.time()
-        curve_data = scope.query("CURVE?")#np.array(scope.query("CURVE?").rstrip("\n").split(' ')[-1].split(','), dtype=int)
+        curve_data = self.query("CURVE?")#np.array(scope.query("CURVE?").rstrip("\n").split(' ')[-1].split(','), dtype=int)
 
         if verbose:
 
